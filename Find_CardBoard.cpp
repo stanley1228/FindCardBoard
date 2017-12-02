@@ -182,125 +182,202 @@ int _tmain(int argc, _TCHAR* argv[])
 //==video==//
 //=========//
 
-int _tmain(int argc, _TCHAR* argv[])
-{
-	VideoCapture capture(0);
-	
-	Mat src;
-
-	Mat mask=Mat::zeros(src.rows,src.cols, CV_8U); //為了濾掉其他顏色
-    
-	Mat hsv;
-	Mat	CardBoardColor,dst;
-   // cvtColor(src,hsv,CV_BGR2HSV);//轉成hsv平面
-    
-    //inRange(hsv,Scalar(g_H_L,g_S_L,g_V_L) , Scalar(g_H_H,g_S_H,g_V_H), CardBoardColor);  //二值化：h值介於20~40 & s值介於0~100 & v值介於100~255
-
-	//mask=CardBoardColor;
-
-	//src.copyTo(dst,mask);
-  
-    namedWindow("src",WINDOW_AUTOSIZE);//show b
-    namedWindow(MASK_WINDOW,WINDOW_AUTOSIZE);//show mask
-    //imshow("dst",dst);//show結果
-    
-	createTrackbar("HL",MASK_WINDOW,&g_H_L,255,on_TrackbarNumcharge);
-	createTrackbar("HH",MASK_WINDOW,&g_H_H,255,on_TrackbarNumcharge);
-	
-	createTrackbar("SL",MASK_WINDOW,&g_S_L,255,on_TrackbarNumcharge);
-	createTrackbar("SH",MASK_WINDOW,&g_S_H,255,on_TrackbarNumcharge);
-	
-	createTrackbar("VL",MASK_WINDOW,&g_V_L,255,on_TrackbarNumcharge);
-	createTrackbar("VH",MASK_WINDOW,&g_V_H,255,on_TrackbarNumcharge);
-
-	namedWindow(ERODE_MASK_WINDOW,WINDOW_AUTOSIZE);
-	createTrackbar("erode size",ERODE_MASK_WINDOW,&g_erode_size,30,on_ErodeSizeChange);
-
-	while(1)
-	{
-		//==Load src==//
-		capture>>src;
-
-		//==transfer to HSV==//
-		cvtColor(src,hsv,CV_BGR2HSV);//轉成hsv平面
-
-		//find out card board color
-		inRange(hsv,Scalar(g_H_L,g_S_L,g_V_L) , Scalar(g_H_H,g_S_H,g_V_H), CardBoardColor);  //二值化：h值介於20~40 & s值介於0~100 & v值介於100~255
-		mask=CardBoardColor;
-
-		//erode
-		Mat element=getStructuringElement(MORPH_RECT,Size(g_erode_size,g_erode_size));
-		Mat erode_mask;
-		erode(mask,erode_mask,element);
-
-		//dilate
-		Mat opening_mask; //erode and dilate
-		dilate(erode_mask,opening_mask,element);
-
-		//==canny==//
-		Mat canny_output;
-		//Mat blur_mask;
-		//blur(opening_mask,blur_mask,Size(20,20));
-		Canny(opening_mask,canny_output,3,9,3);
-
-		//==find countours==//
-		Mat contour_out;
-		vector<Vec4i> g_vHierarchy;
-		vector<vector<Point>> g_vCountours;
-		findContours(canny_output,g_vCountours,g_vHierarchy,RETR_EXTERNAL,CHAIN_APPROX_NONE);//RETR_EXTERNAL 只取外層 RETR_LIST取全部 CHAIN_APPROX_NONE所有輪廓點 CHAIN_APPROX_SIMPLE只取角點
-
-
-
-		//==find minima area rectangel==//
-		Mat dst=src.clone();
-		RotatedRect rRect;
-		
-		Point2f vertices[4]={0};
-		char text[100];
-
-		for(int c=0;c<g_vCountours.size();c++)
-		{			
-			rRect=minAreaRect(g_vCountours[c]);
-			rRect.points(vertices);
-
-			for (int i = 0; i < 4; i++)
-			{
-				circle(dst,vertices[i],6,Scalar(0,0,200),2);//圈出角落點
-				line(dst, vertices[i], vertices[(i+1)%4], Scalar(0,200,0),3);//將4角落點連線
-				sprintf_s(text, "(%3.2f,%3.2f)", vertices[i].x, vertices[i].y);//標註四角落座標
-
-				putText(dst, text, Point(vertices[i].x,vertices[i].y), FONT_HERSHEY_PLAIN, 1, CV_RGB(0,255,0));
-			}
-		}
-		//==draw contours ot dst
-		//Mat drawing=Mat::zeros(canny_output.size(),CV_8UC3);
-		//Mat dst=src.clone();
-		//
-
-		//for(int i=0;i<g_vCountours.size();i++)
-		//{
-		//	//Scalar color=Scalar(g_rng.uniform(0,255),g_rng.uniform(0,255),g_rng.uniform(0,255));
-		//	Scalar color=Scalar(0,255,0);
-		//	drawContours(dst,g_vCountours,i,color,5,8,g_vHierarchy,0,Point());
-		//}
-
-		//show
-		imshow("src",src);
-		imshow(MASK_WINDOW,mask);//show mask
-		imshow(ERODE_MASK_WINDOW,erode_mask);
-		imshow(OPENING_MASK_WINDOW,opening_mask);
-		//imshow("blur_mask",blur_mask);
-		imshow("canny output",canny_output);
-		imshow("dst",dst);//show結果
-		waitKey(30);
-	}
-
-
-   
-
-	return 0;
-}
+//int _tmain(int argc, _TCHAR* argv[])
+//{
+//	VideoCapture capture(0);
+//	
+//	Mat src;
+//
+//	Mat mask=Mat::zeros(src.rows,src.cols, CV_8U); //為了濾掉其他顏色
+//    
+//	Mat hsv;
+//	Mat	CardBoardColor,dst;
+//   // cvtColor(src,hsv,CV_BGR2HSV);//轉成hsv平面
+//    
+//    //inRange(hsv,Scalar(g_H_L,g_S_L,g_V_L) , Scalar(g_H_H,g_S_H,g_V_H), CardBoardColor);  //二值化：h值介於20~40 & s值介於0~100 & v值介於100~255
+//
+//	//mask=CardBoardColor;
+//
+//	//src.copyTo(dst,mask);
+//
+//	//==test ratio between pixel and real word==//
+//	//650mm ==> 8mm
+//	//200mm ==> 25mm
+//	//300mm ==> 38mm
+//	//400mm ==> 50mm
+//	//500mm ==> 60mm
+//	//600mm ==> 70mm
+//	//650mm ==> 75mm  100pixel:75mm 1pix:7.5mm
+//
+//	//==Load from webcam==//
+//	//Mat testratio;
+//	//CvPoint FromPoint1 = cvPoint(100,100);
+//	//CvPoint ToPoint1=cvPoint(100,200);
+//
+//	//while(1)
+//	//{
+//	//	capture>> testratio;
+//	//	line(testratio,FromPoint1,ToPoint1,Scalar(0,200,0),3);
+//	//	namedWindow("test ratio window",WINDOW_AUTOSIZE);
+//	//	imshow("test ratio window",testratio);
+//	//	waitKey(30);
+//	//	
+//	//}
+//	//
+//	//return 0;
+//
+//	//==//
+//  
+//    namedWindow("src",WINDOW_AUTOSIZE);//show b
+//    namedWindow(MASK_WINDOW,WINDOW_AUTOSIZE);//show mask
+//    //imshow("dst",dst);//show結果
+//    
+//	createTrackbar("HL",MASK_WINDOW,&g_H_L,255,on_TrackbarNumcharge);
+//	createTrackbar("HH",MASK_WINDOW,&g_H_H,255,on_TrackbarNumcharge);
+//	
+//	createTrackbar("SL",MASK_WINDOW,&g_S_L,255,on_TrackbarNumcharge);
+//	createTrackbar("SH",MASK_WINDOW,&g_S_H,255,on_TrackbarNumcharge);
+//	
+//	createTrackbar("VL",MASK_WINDOW,&g_V_L,255,on_TrackbarNumcharge);
+//	createTrackbar("VH",MASK_WINDOW,&g_V_H,255,on_TrackbarNumcharge);
+//
+//	namedWindow(ERODE_MASK_WINDOW,WINDOW_AUTOSIZE);
+//	createTrackbar("erode size",ERODE_MASK_WINDOW,&g_erode_size,30,on_ErodeSizeChange);
+//
+//	while(1)
+//	{
+//		//==Load src==//
+//		capture>>src;
+//
+//		//==transfer to HSV==//
+//		cvtColor(src,hsv,CV_BGR2HSV);//轉成hsv平面
+//
+//		//find out card board color
+//		inRange(hsv,Scalar(g_H_L,g_S_L,g_V_L) , Scalar(g_H_H,g_S_H,g_V_H), CardBoardColor);  //二值化：h值介於20~40 & s值介於0~100 & v值介於100~255
+//		mask=CardBoardColor;
+//
+//		//erode
+//		Mat element=getStructuringElement(MORPH_RECT,Size(g_erode_size,g_erode_size));
+//		Mat erode_mask;
+//		erode(mask,erode_mask,element);
+//
+//		//dilate
+//		Mat opening_mask; //erode and dilate
+//		dilate(erode_mask,opening_mask,element);
+//
+//		//==canny==//
+//		//Mat canny_output;
+//		////Mat blur_mask;
+//		////blur(opening_mask,blur_mask,Size(20,20));
+//		//Canny(opening_mask,canny_output,3,9,3);
+//
+//		//==find countours==//
+//		//Mat contour_out;
+//		//vector<Vec4i> g_vHierarchy;
+//		//vector<vector<Point>> g_vCountours;
+//		//findContours(canny_output,g_vCountours,g_vHierarchy,RETR_EXTERNAL,CHAIN_APPROX_NONE);//RETR_EXTERNAL 只取外層 RETR_LIST取全部 CHAIN_APPROX_NONE所有輪廓點 CHAIN_APPROX_SIMPLE只取角點
+//
+//
+//
+//		//==find minima area rectangel==//
+//		//Mat dst=src.clone();
+//		//RotatedRect rRect;
+//		//
+//		//Point2f vertices[4]={0};
+//		//char text[100];
+//
+//		//for(int c=0;c<g_vCountours.size();c++)
+//		//{			
+//		//	rRect=minAreaRect(g_vCountours[c]);
+//		//	rRect.points(vertices);
+//
+//		//	for (int i = 0; i < 4; i++)
+//		//	{
+//		//		circle(dst,vertices[i],6,Scalar(0,0,200),2);//圈出角落點
+//		//		line(dst, vertices[i], vertices[(i+1)%4], Scalar(0,200,0),3);//將4角落點連線
+//		//		sprintf_s(text, "(%3.2f,%3.2f)", vertices[i].x, vertices[i].y);//標註四角落座標
+//
+//		//		putText(dst, text, Point(vertices[i].x,vertices[i].y), FONT_HERSHEY_PLAIN, 1, CV_RGB(0,255,0));
+//		//	}
+//		//}
+//
+//		//==draw contours ot dst
+//		//Mat drawing=Mat::zeros(canny_output.size(),CV_8UC3);
+//		//Mat dst=src.clone();
+//		//
+//
+//		//for(int i=0;i<g_vCountours.size();i++)
+//		//{
+//		//	//Scalar color=Scalar(g_rng.uniform(0,255),g_rng.uniform(0,255),g_rng.uniform(0,255));
+//		//	Scalar color=Scalar(0,255,0);
+//		//	drawContours(dst,g_vCountours,i,color,5,8,g_vHierarchy,0,Point());
+//		//}
+//
+//
+//
+//
+//		//show
+//		imshow("src",src);
+//		imshow(MASK_WINDOW,mask);//show mask
+//		imshow(ERODE_MASK_WINDOW,erode_mask);
+//		imshow(OPENING_MASK_WINDOW,opening_mask);
+//		//imshow("blur_mask",blur_mask);
+//		//imshow("canny output",canny_output);
+//		imshow("dst",dst);//show結果
+//		waitKey(30);
+//	}
+//
+//
+//   
+//
+//	return 0;
+//}
 
 //mask=r+r2+g+b;//全部的二值化圖累加起來就變成遮罩 
 //src.copyTo(dst,mask); //將原圖片經由遮罩過濾後，得到結果dst
 
+int main(int argc, char** argv)
+{
+	VideoCapture capture(0);
+
+	Mat src, src_gray;
+	while(1)
+	{
+		capture>> src;
+
+		/// Read the image
+		//src = imread( argv[1], 1 );
+
+		if( !src.data )
+		{ return -1; }
+
+		/// Convert it to gray
+		cvtColor( src, src_gray, CV_BGR2GRAY );
+
+		/// Reduce the noise so we avoid false circle detection
+		GaussianBlur( src_gray, src_gray, Size(9, 9), 2, 2 );
+
+		vector<Vec3f> circles;
+
+		/// Apply the Hough Transform to find the circles
+		HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, src_gray.rows/8, 200, 100, 0, 0 );
+
+		/// Draw the circles detected
+		for( size_t i = 0; i < circles.size(); i++ )
+		{
+			Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+			int radius = cvRound(circles[i][2]);
+			// circle center
+			circle( src, center, 3, Scalar(0,255,0), -1, 8, 0 );
+			// circle outline
+			circle( src, center, radius, Scalar(0,0,255), 3, 8, 0 );
+		}
+
+		/// Show your results
+		namedWindow( "Hough Circle Transform Demo", CV_WINDOW_AUTOSIZE );
+		imshow( "Hough Circle Transform Demo", src );
+
+		waitKey(30);
+	}
+  return 0;
+}
